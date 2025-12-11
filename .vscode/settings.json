@@ -1,0 +1,12 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.preferences.importModuleSpecifierEnding": "complete",
+  "typescript.tsserver.projectRootPath": ".",
+  "typescript.tsserver.experimental.enableProjectDiagnostics": true,
+  "typescript.tsserver.useSeparateSyntaxServer": false,
+
+  "typescript.tsserver.maxTsServerMemory": 4096,
+  "typescript.tsserver.log": "off",
+  "typescript.preferences.preferTypeOnlyAutoImports": true,
+  "typescript.project": "tsconfig.dev.json"
+}
