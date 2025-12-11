@@ -1,0 +1,13 @@
+{
+  "name": "DAPO MCP Server",
+  "version": "0.1.0",
+  "entry": "./dist/server.js",
+  "capabilities": {
+    "providers": true,
+    "steps": true,
+    "scoring": true,
+    "baseline": true,
+    "qhsm": false,
+    "execution": false
+  }
+}
