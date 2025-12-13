@@ -1,47 +1,64 @@
-import path from "node:path";
-import { pathToFileURL } from "node:url";
-import type { MCPPlugin, MCPPluginContext } from "./types.js";
-
-export interface PluginConfigEntry {
-  name: string;
-  config?: Record<string, unknown>;
-}
+import type { MCPPluginContext, MCPPlugin } from "./types.js";
+import { logger } from "../logger.js";
 
 export async function loadPlugins(
-  plugins: PluginConfigEntry[] | undefined,
+  plugins: MCPPlugin[],
+  rawConfig: Record<string, unknown>,
   ctx: MCPPluginContext
-): Promise<void> {
-  if (!plugins || plugins.length === 0) return;
+): Promise<MCPPlugin[]> {
+  const loaded: MCPPlugin[] = [];
 
-  for (const entry of plugins) {
-    const pluginPath = path.resolve(
-      process.cwd(),
-      "plugins",
-      entry.name,
-      "index.js"
-    );
+  for (const plugin of plugins) {
+    logger.info(`Loading plugin: ${plugin.name}`);
 
-    const mod = await import(pathToFileURL(pluginPath).href);
-    const plugin: MCPPlugin = mod.plugin;
+    let validatedConfig: unknown = undefined;
 
-    if (!plugin || plugin.name !== entry.name) {
-      throw new Error(`Invalid plugin module: ${entry.name}`);
-    }
-
-    let validatedConfig = entry.config;
-
+    // Validate config (if schema provided)
     if (plugin.schema) {
-      const result = plugin.schema.safeParse(entry.config);
-      if (!result.success) {
-        throw new Error(
-          `Invalid config for plugin "${plugin.name}":\n` +
-            JSON.stringify(result.error.format(), null, 2)
+      try {
+        validatedConfig = plugin.schema.parse(rawConfig[plugin.name]);
+      } catch (err) {
+        logger.error(
+          `Plugin config validation failed: ${plugin.name} – ${
+            err instanceof Error ? err.message : String(err)
+          }`
         );
+        throw new Error(`Invalid config for plugin "${plugin.name}"`);
       }
-      validatedConfig = result.data as Record<string, unknown>;
     }
 
-    plugin.setup?.(ctx, validatedConfig);
-    await plugin.onInit?.(ctx);
+    // setup
+    if (plugin.setup) {
+      try {
+        logger.info(`Running plugin setup: ${plugin.name}`);
+        await plugin.setup(ctx, validatedConfig);
+      } catch (err) {
+        logger.error(
+          `Plugin setup failed: ${plugin.name} – ${
+            err instanceof Error ? err.message : String(err)
+          }`
+        );
+        throw new Error(`Setup failed for plugin "${plugin.name}"`);
+      }
+    }
+
+    // onInit
+    if (plugin.onInit) {
+      try {
+        logger.info(`Running plugin onInit: ${plugin.name}`);
+        await plugin.onInit(ctx);
+      } catch (err) {
+        logger.error(
+          `Plugin onInit failed: ${plugin.name} – ${
+            err instanceof Error ? err.message : String(err)
+          }`
+        );
+        throw new Error(`onInit failed for plugin "${plugin.name}"`);
+      }
+    }
+
+    loaded.push(plugin);
   }
+
+  return loaded;
 }

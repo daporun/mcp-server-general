@@ -27,10 +27,10 @@ export interface MCPPlugin<TConfig = unknown> {
   schema?: ZodSchema<TConfig>;
 
   /** Called once after config validation */
-  setup?: (ctx: MCPPluginContext, config: TConfig | undefined) => void;
+  setup?(ctx: MCPPluginContext, config: TConfig | undefined): Promise<void> | void;
 
   /** Lifecycle hooks (optional) */
-  onInit?: (ctx: MCPPluginContext) => Promise<void> | void;
-  onReady?: (ctx: MCPPluginContext) => Promise<void> | void;
-  onShutdown?: () => Promise<void> | void;
+  onInit?(ctx: MCPPluginContext): Promise<void> | void;
+  onReady?(ctx: MCPPluginContext): Promise<void> | void;
+  onShutdown?(): Promise<void> | void;
 }

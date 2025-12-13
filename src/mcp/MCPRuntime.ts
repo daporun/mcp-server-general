@@ -1,80 +1,59 @@
-// src/mcp/serverRuntime.ts
+import type { MCPPlugin, MCPPluginContext } from "./plugins/types.js";
+import { logger } from "./logger.js";
 
-import process from "node:process";
-import { getMethod } from "./MCPRouter.js";
-import type { JSONRPCRequest, JSONRPCResponse } from "./types.js";
+export class MCPRuntime {
+  private ready = false;
+  private shuttingDown = false;
 
-/**
- * Writes a JSON-RPC response to STDOUT.
- */
-function sendResponse(response: JSONRPCResponse): void {
-  process.stdout.write(JSON.stringify(response) + "\n");
-}
+constructor(
+    private readonly plugins: MCPPlugin[],
+    private readonly ctx: MCPPluginContext
+  ) {}
 
-/**
- * Starts the JSON-RPC listening loop on STDIN.
- * This is the core of MCP: JSON-RPC messages come in line-by-line.
- */
-export function startMCPServer(): void {
-  process.stdin.setEncoding("utf8");
+  async onReady(): Promise<void> {
+    if (this.ready) return;
+    this.ready = true;
 
-  process.stdin.on("data", async (chunk: string) => {
-    const lines = chunk
-      .split("\n")
-      .map(l => l.trim())
-      .filter(l => l.length > 0);
+    logger.info("Runtime entering READY state");
 
-    for (const line of lines) {
-      let request: JSONRPCRequest;
+    for (const plugin of this.plugins) {
+      if (!plugin.onReady) continue;
 
       try {
-        request = JSON.parse(line);
+        logger.info(`Running plugin onReady: ${plugin.name}`);
+        await plugin.onReady(this.ctx);
       } catch (err) {
-        sendResponse({
-          jsonrpc: "2.0",
-          id: null,
-          error: {
-            code: -32700,
-            message: "Invalid JSON received",
-            data: (err as Error).message
-          }
-        });
-        continue;
-      }
-
-      const handler = getMethod(request.method);
-
-      if (!handler) {
-        sendResponse({
-          jsonrpc: "2.0",
-          id: request.id,
-          error: {
-            code: -32601,
-            message: `Method not found: ${request.method}`
-          }
-        });
-        continue;
-      }
-
-      try {
-        const result = await handler(request.params);
-
-        sendResponse({
-          jsonrpc: "2.0",
-          id: request.id,
-          result
-        });
-      } catch (err) {
-        sendResponse({
-          jsonrpc: "2.0",
-          id: request.id,
-          error: {
-            code: -32603,
-            message: "Internal MCP Server error",
-            data: (err as Error).message
-          }
-        });
+        logger.error(
+          `Plugin onReady failed: ${plugin.name} – ${
+            err instanceof Error ? err.message : String(err)
+          }`
+        );
+        throw err; // startup should fail here
       }
     }
-  });
+  }
+
+  async shutdown(signal: string): Promise<void> {
+    if (this.shuttingDown) return;
+    this.shuttingDown = true;
+
+    logger.warn(`Shutdown initiated (${signal})`);
+
+    for (const plugin of this.plugins) {
+      if (!plugin.onShutdown) continue;
+
+      try {
+        logger.info(`Shutting down plugin: ${plugin.name}`);
+        await plugin.onShutdown();
+      } catch (err) {
+        logger.error(
+          `Plugin shutdown failed: ${plugin.name} – ${
+            err instanceof Error ? err.message : String(err)
+          }`
+        );
+      }
+    }
+
+    logger.info("Shutdown completed");
+  }
 }

@@ -1,18 +1,35 @@
 import { buildHandshake } from "./mcp/MCPHandshake.js";
-import { startMCPServer } from "./mcp/MCPRuntime.js";
+import { startMCPServer } from "./mcp/MCPServerLoop.js";
 import { registerMethod } from "./mcp/MCPRouter.js";
 import { listRegistry } from "./mcp/ListRegistry.js";
 import { loadConfig } from "./mcp/loadConfig.js";
 import { loadPlugins } from "./mcp/plugins/loadPlugins.js";
 import { pluginContext } from "./mcp/plugins/pluginContext.js";
+import type { MCPPlugin } from "./mcp/plugins/types.js";
+import { MCPRuntime } from "./mcp/MCPRuntime.js";
+
+const pluginModules: MCPPlugin[] = [];
 
 // 1. Load config
 const config = loadConfig();
-// after loadConfig()
-await loadPlugins(config.plugins, pluginContext);
 
+// 2. Build plugin config map (✔ ADAPTER)
+const pluginConfigMap: Record<string, unknown> = {};
 
-// 2. Register lists from config
+for (const plugin of config.plugins ?? []) {
+  if (plugin.name) {
+    pluginConfigMap[plugin.name] = plugin.config ?? {};
+  }
+}
+
+// 3. Load plugins
+const plugins = await loadPlugins(
+  pluginModules,
+  pluginConfigMap,
+  pluginContext
+);
+
+// 4. Register lists from config
 for (const list of config.lists ?? []) {
   listRegistry.register({
     id: list.id,
@@ -21,10 +38,13 @@ for (const list of config.lists ?? []) {
   });
 }
 
-// 3. Handshake (NOW registry is populated)
+// Init runtime
+const runtime = new MCPRuntime(plugins, pluginContext);
+
+// 5. Handshake (NOW registry is populated)
 console.log(JSON.stringify(buildHandshake(), null, 2));
 
-// 4. Core MCP methods
+// 6. Core MCP methods
 registerMethod("lists.list", async () => {
   return listRegistry.list().map(l => ({
     id: l.id,
@@ -53,5 +73,20 @@ registerMethod("lists.get", async (params) => {
   return list;
 });
 
-// 5. Start MCP loop
+// Call onReady
+await runtime.onReady();
+
+// 7. Start MCP loop
 startMCPServer();
+
+const shutdown = async (signal: string) => {
+  try {
+    await runtime.shutdown(signal);
+  } finally {
+    process.exit(0);
+  }
+};
+
+// 8. Listen for termination signals and shut down gracefully
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
