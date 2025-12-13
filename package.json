@@ -1,17 +1,23 @@
 {
-  "name": "dapo-mcp-server",
+  "name": "mcp-server-general",
   "version": "0.1.0",
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
-    "dev": "tsx src/server.ts"
+    "typecheck": "tsc -p tsconfig.dev.json",
+    "test": "vitest",
+    "test:run": "vitest run"
   },
   "devDependencies": {
-    "@types/node": "^25.0.0",
+    "@types/node": "^25.0.1",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.15"
+  },
+  "dependencies": {
+    "zod": "^4.1.13"
   }
 }

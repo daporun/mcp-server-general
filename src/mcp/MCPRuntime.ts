@@ -1,6 +1,7 @@
 // src/mcp/serverRuntime.ts
 
-import { getMethod } from "./router.js";
+import process from "node:process";
+import { getMethod } from "./MCPRouter.js";
 import type { JSONRPCRequest, JSONRPCResponse } from "./types.js";
 
 /**

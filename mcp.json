@@ -1,13 +1,20 @@
 {
-  "name": "DAPO MCP Server",
-  "version": "0.1.0",
-  "entry": "./dist/server.js",
-  "capabilities": {
-    "providers": true,
-    "steps": true,
-    "scoring": true,
-    "baseline": true,
-    "qhsm": false,
-    "execution": false
-  }
+  "lists": [
+    {
+      "id": "example.tools",
+      "items": [
+        { "name": "ping" }
+      ]
+    }
+  ],
+
+  "plugins": [
+    {
+      "name": "example-plugin",
+      "path": "./plugins/example-plugin.js",
+      "config": {
+        "enabled": true
+      }
+    }
+  ]
 }
