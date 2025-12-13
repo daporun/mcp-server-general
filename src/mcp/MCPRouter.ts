@@ -1,4 +1,4 @@
-// src/mcp/router.ts
+// src/mcp/MCPRouter.ts
 
 import type { MethodHandler } from "./types.js";
 

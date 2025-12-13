@@ -1,42 +1,57 @@
-// src/server.ts
+import { buildHandshake } from "./mcp/MCPHandshake.js";
+import { startMCPServer } from "./mcp/MCPRuntime.js";
+import { registerMethod } from "./mcp/MCPRouter.js";
+import { listRegistry } from "./mcp/ListRegistry.js";
+import { loadConfig } from "./mcp/loadConfig.js";
+import { loadPlugins } from "./mcp/plugins/loadPlugins.js";
+import { pluginContext } from "./mcp/plugins/pluginContext.js";
 
-import { buildHandshake } from "./mcp/handshake.js";
-import { startMCPServer } from "./mcp/serverRuntime.js";
-import { registerMethod } from "./mcp/router.js";
+// 1. Load config
+const config = loadConfig();
+// after loadConfig()
+await loadPlugins(config.plugins, pluginContext);
 
-// DAPO metadata sources (readonly arrays — perfectly fine)
-import { providers } from "./dapo/providers.js";
-import { steps } from "./dapo/steps.js";
 
-// MCP method implementations
-import { providersList } from "./methods/providersList.js";
-import { stepsList } from "./methods/stepsList.js";
+// 2. Register lists from config
+for (const list of config.lists ?? []) {
+  listRegistry.register({
+    id: list.id,
+    title: list.title,
+    items: list.items
+  });
+}
 
-/**
- * Entry point for the DAPO MCP Server.
- * Prints handshake on startup, then starts the JSON-RPC loop.
- */
-
-// 1. MCP handshake output (required by MCP protocol)
+// 3. Handshake (NOW registry is populated)
 console.log(JSON.stringify(buildHandshake(), null, 2));
 
-
-// 2. Register MCP methods
-
-registerMethod("providers.list", async () => {
-  // providers is readonly → MCP accepts readonly just fine → return as-is
-  return {
-    providers: providersList(providers)
-  };
+// 4. Core MCP methods
+registerMethod("lists.list", async () => {
+  return listRegistry.list().map(l => ({
+    id: l.id,
+    title: l.title,
+    count: l.items.length
+  }));
 });
 
-registerMethod("steps.list", async () => {
-  // steps is readonly → MCP accepts readonly → no mutation
-  return {
-    steps: stepsList(steps)
-  };
+registerMethod("lists.get", async (params) => {
+  if (
+    typeof params !== "object" ||
+    params === null ||
+    !("id" in params) ||
+    typeof (params as { id: unknown }).id !== "string"
+  ) {
+    throw new Error("Invalid params: expected { id: string }");
+  }
+
+  const { id } = params as { id: string };
+  const list = listRegistry.get(id);
+
+  if (!list) {
+    throw new Error(`List not found: ${id}`);
+  }
+
+  return list;
 });
 
-
-// 3. Start JSON-RPC request loop (listens on STDIN)
+// 5. Start MCP loop
 startMCPServer();
