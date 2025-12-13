@@ -1,0 +1,31 @@
+flowchart TD
+    A[server.ts<br/>Bootstrap] --> B[MCPRuntime<br/>Lifecycle]
+    B --> C[MCPServerLoop<br/>Protocol]
+    C --> D[MCPRouter & Registries]
+
+    subgraph Bootstrap
+        A1[loadConfig]
+        A2[loadPlugins]
+        A3[buildHandshake]
+        A4[runtime.onReady]
+        A5[startMCPServer]
+    end
+
+    A --> A1 --> A2 --> A3 --> A4 --> A5
+    A5 --> C
+
+    subgraph Lifecycle
+        B1[onReady]
+        B2[shutdown]
+    end
+
+    B --> B1
+    B --> B2
+
+    subgraph Protocol
+        C1[STDIN JSON-RPC]
+        C2[Router Dispatch]
+        C3[STDOUT Response]
+    end
+
+    C --> C1 --> C2 --> C3
