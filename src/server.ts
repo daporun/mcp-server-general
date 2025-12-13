@@ -5,15 +5,16 @@ import { listRegistry } from "./mcp/ListRegistry.js";
 import { loadConfig } from "./mcp/loadConfig.js";
 import { loadPlugins } from "./mcp/plugins/loadPlugins.js";
 import { pluginContext } from "./mcp/plugins/pluginContext.js";
-import type { MCPPlugin } from "./mcp/plugins/types.js";
 import { MCPRuntime } from "./mcp/MCPRuntime.js";
+import { discoverPlugins } from "./mcp/plugins/discoverPlugins.js";
 
-const pluginModules: MCPPlugin[] = [];
+// 0. Load plugins
+const pluginModules = await discoverPlugins();
 
 // 1. Load config
 const config = loadConfig();
 
-// 2. Build plugin config map (✔ ADAPTER)
+// 2. Build plugin config map (ADAPTER)
 const pluginConfigMap: Record<string, unknown> = {};
 
 for (const plugin of config.plugins ?? []) {

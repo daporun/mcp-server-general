@@ -1,7 +1,16 @@
-# MCP Server Architecture & Lifecycle
+# mcp-server-general
 
-This document describes the internal architecture and lifecycle of mcp-server-general.
-The goal is to clearly separate protocol handling, runtime lifecycle, and plugin extensibility, while keeping the system predictable, testable, and production-ready.
+[![CI](https://github.com/OWNER/mcp-server-general/actions/workflows/ci.yml/badge.svg?branch=main)](
+https://github.com/OWNER/mcp-server-general/actions/workflows/ci.yml
+)
+
+> A general-purpose MCP server designed for long-running, plugin-driven AI orchestration.
+
+This repository implements a production-ready MCP server with:
+- strict lifecycle management
+- plugin-based extensibility
+- protocol/lifecycle separation
+- full test coverage
 
 For plugin developers, see the [Plugin Author Guide](docs/plugin-author-guide.md).
 
