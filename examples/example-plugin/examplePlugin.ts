@@ -10,6 +10,10 @@ const examplePluginSchema = z.object({
   greeting: z.string(),
 });
 
+const greetParamsSchema = z.object({
+  name: z.string(),
+});
+
 export const examplePlugin: MCPPlugin<{ greeting: string }> = {
   name: "example-plugin",
 
@@ -24,10 +28,9 @@ export const examplePlugin: MCPPlugin<{ greeting: string }> = {
   onInit(ctx) {
     ctx.logger.info("[example-plugin] onInit");
 
-    ctx.registerMethod("example.greet", async () => {
-      return {
-        message: "Hello from example plugin!",
-      };
+    ctx.registerMethod("example.greet", async (params: unknown) => {
+      const { name } = greetParamsSchema.parse(params);
+      return { message: `Hello ${name}` };
     });
 
     ctx.registerList({

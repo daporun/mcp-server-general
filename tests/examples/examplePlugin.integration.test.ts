@@ -1,28 +1,39 @@
 // examplePlugin.integration.test.ts
 
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { examplePlugin } from "../../examples/example-plugin/examplePlugin.js";
 
 import { loadPlugins } from "../../src/mcp/plugins/loadPlugins.js";
 import { MCPRuntime } from "../../src/mcp/MCPRuntime.js";
 import { listRegistry } from "../../src/mcp/ListRegistry.js";
-import { getMethod } from "../../src/mcp/MCPRouter.js";
-import { registerMethod } from "../../src/mcp/MCPRouter.js";
+import { router } from "../../src/mcp/router.js";
 
 import type { MCPPluginContext } from "../../src/mcp/plugins/types.js";
 
 describe("Example Plugin – integration", () => {
-  const ctx: MCPPluginContext = {
-    logger: {
+  let ctx: MCPPluginContext;
+
+  beforeEach(() => {
+    // clean registry state between tests
+    listRegistry.clear?.();
+    router.clear?.();
+
+    ctx = {
+      logger: {
         info: vi.fn(),
         warn: vi.fn(),
         error: vi.fn(),
-    },
-    registerMethod,
-    registerList: (list) => {
+      },
+
+      registerMethod(name, handler) {
+        router.register(name, handler);
+      },
+
+      registerList(list) {
         listRegistry.register(list);
-    },
-  };
+      },
+    };
+  });
 
   it("registers method, list and runs full lifecycle", async () => {
     const plugins = await loadPlugins(
@@ -37,16 +48,16 @@ describe("Example Plugin – integration", () => {
 
     const runtime = new MCPRuntime(plugins, ctx);
 
-    // onReady
-    await runtime.onReady();
+    // 🔹 registration phase
+    await runtime.onInit();
 
     // method registration
-    const method = getMethod("example.greet");
+    const method = router.get("example.greet");
     expect(method).toBeDefined();
 
-    const result = await method?.({});
+    const result = await method?.({ name: "Tony" });
     expect(result).toEqual({
-      message: "Hello from example plugin!",
+      message: "Hello Tony",
     });
 
     // list registration
@@ -54,7 +65,10 @@ describe("Example Plugin – integration", () => {
     expect(list).toBeDefined();
     expect(list?.items).toHaveLength(2);
 
-    // shutdown
+    // 🔹 runtime ready
+    await runtime.onReady();
+
+    // 🔹 shutdown
     await runtime.shutdown("SIGTERM");
   });
 });

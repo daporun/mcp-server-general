@@ -25,6 +25,10 @@ class ListRegistry {
   list(): MCPList[] {
     return Array.from(this.lists.values());
   }
+
+  clear(): void {
+    this.lists.clear();
+  }
 }
 
 export const listRegistry = new ListRegistry();

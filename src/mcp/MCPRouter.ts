@@ -1,19 +1,27 @@
 // src/mcp/MCPRouter.ts
-
 import type { MethodHandler } from "./types.js";
 
-const registry: Record<string, MethodHandler> = {};
+export class MCPRouter {
+  private readonly registry: Record<string, MethodHandler> = {};
 
-/**
- * Register a new MCP method handler.
- */
-export function registerMethod(name: string, handler: MethodHandler): void {
-  registry[name] = handler;
-}
+  register(name: string, handler: MethodHandler): void {
+    if (this.registry[name]) {
+      throw new Error(`Method already registered: ${name}`);
+    }
+    this.registry[name] = handler;
+  }
 
-/**
- * Look up a method handler by name.
- */
-export function getMethod(name: string): MethodHandler | undefined {
-  return registry[name];
+  get(name: string): MethodHandler | undefined {
+    return this.registry[name];
+  }
+
+  list(): string[] {
+    return Object.keys(this.registry);
+  }
+
+  clear(): void {
+    for (const key of Object.keys(this.registry)) {
+      delete this.registry[key];
+    }
+  }
 }

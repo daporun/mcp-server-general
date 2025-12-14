@@ -1,8 +1,8 @@
-// src/mcp/serverRuntime.ts
+// src/mcp/MCPServerLoop.ts
 
 import process from "node:process";
-import { getMethod } from "./MCPRouter.js";
 import type { JSONRPCRequest, JSONRPCResponse } from "./types.js";
+import { router } from "./router.js";
 
 /**
  * Writes a JSON-RPC response to STDOUT.
@@ -21,14 +21,15 @@ export function startMCPServer(): void {
   process.stdin.on("data", async (chunk: string) => {
     const lines = chunk
       .split("\n")
-      .map(l => l.trim())
-      .filter(l => l.length > 0);
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
 
     for (const line of lines) {
       let request: JSONRPCRequest;
 
+      // 1. Parse JSON
       try {
-        request = JSON.parse(line);
+        request = JSON.parse(line) as JSONRPCRequest;
       } catch (err) {
         sendResponse({
           jsonrpc: "2.0",
@@ -42,12 +43,13 @@ export function startMCPServer(): void {
         continue;
       }
 
-      const handler = getMethod(request.method);
+      // 2. Lookup handler
+      const handler = router.get(request.method);
 
       if (!handler) {
         sendResponse({
           jsonrpc: "2.0",
-          id: request.id,
+          id: request.id ?? null,
           error: {
             code: -32601,
             message: `Method not found: ${request.method}`
@@ -56,18 +58,19 @@ export function startMCPServer(): void {
         continue;
       }
 
+      // 3. Execute handler
       try {
         const result = await handler(request.params);
 
         sendResponse({
           jsonrpc: "2.0",
-          id: request.id,
+          id: request.id ?? null,
           result
         });
       } catch (err) {
         sendResponse({
           jsonrpc: "2.0",
-          id: request.id,
+          id: request.id ?? null,
           error: {
             code: -32603,
             message: "Internal MCP Server error",

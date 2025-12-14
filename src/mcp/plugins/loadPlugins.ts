@@ -42,21 +42,6 @@ export async function loadPlugins(
       }
     }
 
-    // onInit
-    if (plugin.onInit) {
-      try {
-        logger.info(`Running plugin onInit: ${plugin.name}`);
-        await plugin.onInit(ctx);
-      } catch (err) {
-        logger.error(
-          `Plugin onInit failed: ${plugin.name} – ${
-            err instanceof Error ? err.message : String(err)
-          }`
-        );
-        throw new Error(`onInit failed for plugin "${plugin.name}"`);
-      }
-    }
-
     loaded.push(plugin);
   }
 

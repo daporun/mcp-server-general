@@ -1,3 +1,5 @@
+// src/mcp/plugins/types.ts
+
 import type { ZodSchema } from "zod";
 
 export interface MCPPluginContext {

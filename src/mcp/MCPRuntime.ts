@@ -2,14 +2,44 @@ import type { MCPPlugin, MCPPluginContext } from "./plugins/types.js";
 import { logger } from "./logger.js";
 
 export class MCPRuntime {
+  private initialized = false;
   private ready = false;
   private shuttingDown = false;
 
-constructor(
+  constructor(
     private readonly plugins: MCPPlugin[],
     private readonly ctx: MCPPluginContext
   ) {}
 
+  /**
+   * Registration phase – plugins register methods and lists here.
+   */
+  async onInit(): Promise<void> {
+    if (this.initialized) return;
+    this.initialized = true;
+
+    logger.info("Runtime entering INIT state");
+
+    for (const plugin of this.plugins) {
+      if (!plugin.onInit) continue;
+
+      try {
+        logger.info(`Running plugin onInit: ${plugin.name}`);
+        await plugin.onInit(this.ctx);
+      } catch (err) {
+        logger.error(
+          `Plugin onInit failed: ${plugin.name} – ${
+            err instanceof Error ? err.message : String(err)
+          }`
+        );
+        throw err; // startup should fail here
+      }
+    }
+  }
+
+  /**
+   * Runtime-ready phase – side effects, IO, background tasks.
+   */
   async onReady(): Promise<void> {
     if (this.ready) return;
     this.ready = true;
@@ -28,7 +58,7 @@ constructor(
             err instanceof Error ? err.message : String(err)
           }`
         );
-        throw err; // startup should fail here
+        throw err;
       }
     }
   }
