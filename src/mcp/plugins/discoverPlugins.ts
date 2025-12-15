@@ -1,38 +1,55 @@
 // discoverPlugins.ts
 
 import { readdir } from "node:fs/promises";
-import { join, extname } from "node:path";
-import { pathToFileURL } from "node:url";
+import { join, extname, resolve, dirname } from "node:path";
+import { pathToFileURL, fileURLToPath } from "node:url";
 
 import type { MCPPlugin } from "./types.js";
 
 /**
- * Discover MCP plugins from the given directory.
+ * Discover MCP plugins shipped with the MCP server package.
  *
  * Rules:
  * - Files are loaded in alphabetical order
  * - Each file must default-export an MCPPlugin
  * - plugin.name must be unique
  * - Fail-fast on any error
+ *
+ * IMPORTANT:
+ * Plugin discovery is resolved relative to the server package,
+ * NOT the current working directory.
  */
 export async function discoverPlugins(
-  pluginsDir = "plugins"
+  pluginsDir?: string
 ): Promise<MCPPlugin[]> {
+  // Resolve package-relative plugins directory (bin-safe)
+  const baseDir =
+    pluginsDir ??
+    resolve(
+      dirname(fileURLToPath(import.meta.url)),
+      "../../plugins"
+    );
+
   let entries: string[];
 
   try {
-    entries = await readdir(pluginsDir);
+    entries = await readdir(baseDir);
   } catch (err) {
+    // No plugins directory is a valid state for a generic server
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") {
+      return [];
+    }
+
     throw new Error(
-      `Failed to read plugins directory: ${pluginsDir}\n` +
+      `Failed to read plugins directory: ${baseDir}\n` +
         `Reason: ${err instanceof Error ? err.message : String(err)}`
     );
   }
 
   const pluginFiles = entries
-    .filter(f => {
+    .filter((f) => {
       const ext = extname(f);
-      return ext === ".js" || ext === ".ts";
+      return ext === ".js"; // NOTE: runtime loads compiled JS only
     })
     .sort();
 
@@ -40,7 +57,7 @@ export async function discoverPlugins(
   const seenNames = new Map<string, string>(); // name -> file
 
   for (const file of pluginFiles) {
-    const fullPath = join(pluginsDir, file);
+    const fullPath = join(baseDir, file);
 
     let mod: unknown;
 
