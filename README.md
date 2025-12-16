@@ -1,7 +1,7 @@
 # mcp-server-general
 
-[![CI](https://github.com/OWNER/mcp-server-general/actions/workflows/ci.yml/badge.svg?branch=main)](
-https://github.com/OWNER/mcp-server-general/actions/workflows/ci.yml
+[![CI](https://github.com/daporun/mcp-server-general/actions/workflows/ci.yml/badge.svg?branch=main)](
+https://github.com/daporun/mcp-server-general/actions/workflows/ci.yml
 )
 
 > A general-purpose MCP server designed for long-running, plugin-driven AI orchestration.
