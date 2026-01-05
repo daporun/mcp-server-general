@@ -7,7 +7,7 @@
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json && chmod +x dist/server.js",
+    "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "typecheck": "tsc -p tsconfig.dev.json",
     "test": "vitest",
@@ -26,5 +26,12 @@
   },
   "dependencies": {
     "zod": "^4.1.13"
-  }
+  },
+  "files": [
+    "!dist/**/__tests__/**",
+    "dist",
+    "README.md",
+    "LICENSE",
+    "docs"
+  ]
 }
