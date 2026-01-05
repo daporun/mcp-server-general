@@ -3,6 +3,11 @@
   "include": [
     "src/**/*.ts",
     "tests/**/*.ts",
-    "examples/**/*.ts"
+    "examples/**/*.ts",
+     "*.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules"
   ]
 }
