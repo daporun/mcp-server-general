@@ -1,10 +1,10 @@
 # mcp-server-general
 
+A general-purpose MCP server designed for long-running, plugin-driven AI orchestration.
+
 [![CI](https://github.com/daporun/mcp-server-general/actions/workflows/ci.yml/badge.svg?branch=main)](
 https://github.com/daporun/mcp-server-general/actions/workflows/ci.yml
 )
-
-> A general-purpose MCP server designed for long-running, plugin-driven AI orchestration.
 
 This server is fully compatible with the MCP JSON-RPC specification and works seamlessly with:
 
