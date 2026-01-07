@@ -1,6 +1,6 @@
 {
   "name": "mcp-server-general",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A general-purpose MCP server designed for long-running, plugin-driven AI orchestration.",
   "bin": {
     "mcp-server-general": "dist/server.js"
