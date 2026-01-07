@@ -6,6 +6,11 @@ https://github.com/daporun/mcp-server-general/actions/workflows/ci.yml
 
 > A general-purpose MCP server designed for long-running, plugin-driven AI orchestration.
 
+This server is fully compatible with the MCP JSON-RPC specification and works seamlessly with:
+
+- **mcp-client-general** – a general-purpose MCP CLI & programmatic client  
+  https://github.com/daporun/mcp-client-general
+
 This repository implements a production-ready MCP server with:
 - strict lifecycle management
 - plugin-based extensibility
@@ -59,7 +64,8 @@ flowchart TD
 ## Why this separation matters
 
 **Protocol layer is stable**  
-`MCPServerLoop` implements the MCP JSON-RPC contract and is already validated against `mcp-client-general`.
+`MCPServerLoop` implements the MCP JSON-RPC contract and is validated against
+[`mcp-client-general`](https://github.com/daporun/mcp-client-general).
 
 **Lifecycle is explicit and testable**  
 `MCPRuntime` only manages startup and shutdown phases.
@@ -165,19 +171,22 @@ All lifecycle hooks that mutate runtime state receive MCPPluginContext.
 Protocol ≠ Lifecycle
 MCP JSON-RPC handling is intentionally decoupled from lifecycle logic.
 
+## Getting Started
+
+To interact with this server from the command line or from Node.js code, you can use:
+
+- **mcp-client-general**  
+  A general-purpose MCP client with CLI and TypeScript API  
+  https://github.com/daporun/mcp-client-general
 
 ## Summary
 
 This architecture provides:
 
 - Predictable startup and shutdown
-
 - Stable MCP protocol handling
-
 - Clean plugin extensibility
-
 - High testability
-
 - Clear mental model for contributors
 
 It is intentionally minimal, but designed to scale.
